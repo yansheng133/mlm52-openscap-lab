@@ -1,0 +1,17 @@
+item_id,title,stig_vuln_id,title_keywords
+ITEM-01,Home directories defined in /etc/passwd must exist,V-230323,
+ITEM-02,auditd name_format must be set,V-230394,
+ITEM-03,Act when audit storage reaches 75% usage,V-230483,
+ITEM-04,chrony must not act as a server (port 0),V-230485,
+ITEM-05,chrony network management disabled (cmdport 0),V-230486,
+ITEM-06,sendmail must not be installed,V-230489,
+ITEM-07,Camera (uvcvideo) disabled,V-230493,
+ITEM-08,IEEE 1394 FireWire disabled,V-230499,
+ITEM-09,Bluetooth disabled,V-230507,
+ITEM-10,Ctrl-Alt-Delete disabled,V-230529,
+ITEM-11,systemd Ctrl-Alt-Delete burst action disabled,V-230531,
+ITEM-12,sudo requires the user's password,V-237642,
+ITEM-13,No blank passwords (no nullok),V-244540,prevent login|empty password
+ITEM-14,chronyd runs without extra privileges,,chronyd|chrony user
+ITEM-15,Password history is enforced,V-230368,limit password reuse
+ITEM-16,Maximum password age,V-230366,

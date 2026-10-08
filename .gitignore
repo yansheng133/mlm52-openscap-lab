@@ -1,0 +1,13 @@
+# Whitelist: ignore everything, then allow only what is meant to be published.
+*
+!.gitignore
+!LICENSE
+!README.md
+!scripts/
+!scripts/*.sh
+!tools/
+!tools/*.py
+!examples/
+!examples/*.csv
+!examples/*.sls
+!examples/*.json
