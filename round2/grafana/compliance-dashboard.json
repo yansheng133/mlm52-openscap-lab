@@ -1,0 +1,220 @@
+{
+ "description": "基準合規盤點（資料來源：MLM 報表資料庫，非即時；見右上『報表資料庫最後更新』）",
+ "panels": [
+  {
+   "datasource": {
+    "uid": "${DS_REPORTDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "max": 100,
+     "min": 0,
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 80
+       },
+       {
+        "color": "green",
+        "value": 100
+       }
+      ]
+     },
+     "unit": "percent"
+    },
+    "overrides": []
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 0
+   },
+   "id": 1,
+   "options": {
+    "displayMode": "gradient",
+    "orientation": "horizontal",
+    "reduceOptions": {
+     "calcs": [],
+     "fields": "",
+     "values": true
+    },
+    "showUnfilled": true
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "${DS_REPORTDB}"
+     },
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (system_id) system_id, scan_id, hostname, end_time\n  FROM scapscanreport WHERE profile = 'xccdf_org.ssgproject.content_profile_lab_selected'\n  ORDER BY system_id, scan_id DESC),\nmap(item, rule) AS (VALUES\n    ('ITEM-01', 'accounts_user_interactive_home_directory_exists'),\n    ('ITEM-02', 'auditd_name_format'),\n    ('ITEM-03', 'auditd_data_retention_space_left_percentage'),\n    ('ITEM-04', 'chronyd_client_only'),\n    ('ITEM-05', 'chronyd_no_chronyc_network'),\n    ('ITEM-06', 'package_sendmail_removed'),\n    ('ITEM-07', 'kernel_module_uvcvideo_disabled'),\n    ('ITEM-08', 'kernel_module_firewire-core_disabled'),\n    ('ITEM-09', 'kernel_module_bluetooth_disabled'),\n    ('ITEM-10', 'disable_ctrlaltdel_reboot'),\n    ('ITEM-11', 'disable_ctrlaltdel_burstaction'),\n    ('ITEM-12', 'sudoers_validate_passwd'),\n    ('ITEM-13', 'no_empty_passwords'),\n    ('ITEM-14', 'chronyd_run_as_chrony_user'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_system_auth'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_password_auth'),\n    ('ITEM-16', 'accounts_maximum_age_login_defs')),\nr AS (\n  SELECT l.hostname, l.end_time, l.scan_id, m.item, m.rule, COALESCE(rr.result, '(no result)') AS result\n  FROM latest l CROSS JOIN map m\n  LEFT JOIN scapscanresultreport rr ON rr.scan_id = l.scan_id\n       AND replace(rr.idref, 'xccdf_org.ssgproject.content_rule_', '') = m.rule),\nf AS (\n  SELECT hostname, end_time, scan_id, item,\n    CASE WHEN bool_or(result IN ('fail','error','unknown')) THEN 'fail'\n         WHEN bool_or(result IN ('(no result)','notselected')) THEN 'unchecked'\n         WHEN bool_and(result = 'notapplicable') THEN 'na'\n         ELSE 'pass' END AS verdict\n  FROM r GROUP BY 1,2,3,4)\nSELECT hostname AS \"主機\",\n  round(100.0 * count(*) FILTER (WHERE verdict = 'pass') / NULLIF(count(*) FILTER (WHERE verdict <> 'na'), 0), 1) AS \"合規率\"\nFROM f GROUP BY hostname ORDER BY hostname",
+     "refId": "A"
+    }
+   ],
+   "title": "各主機基準合規率（最新一次 lab_selected 掃描）",
+   "type": "bargauge"
+  },
+  {
+   "datasource": {
+    "uid": "${DS_REPORTDB}"
+   },
+   "gridPos": {
+    "h": 3,
+    "w": 12,
+    "x": 12,
+    "y": 0
+   },
+   "id": 5,
+   "targets": [
+    {
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "${DS_REPORTDB}"
+     },
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "SELECT (SELECT max(synced_date) FROM system) AS \"報表資料庫最後更新\",\n  (SELECT max(end_time) FROM scapscanreport) AS \"庫內最新掃描完成時間\" ",
+     "refId": "A"
+    }
+   ],
+   "title": "報表資料庫最後更新（資料新舊）",
+   "type": "table"
+  },
+  {
+   "datasource": {
+    "uid": "${DS_REPORTDB}"
+   },
+   "gridPos": {
+    "h": 4,
+    "w": 12,
+    "x": 12,
+    "y": 3
+   },
+   "id": 6,
+   "targets": [
+    {
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "${DS_REPORTDB}"
+     },
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (system_id) system_id, scan_id, hostname, end_time\n  FROM scapscanreport WHERE profile = 'xccdf_org.ssgproject.content_profile_lab_selected'\n  ORDER BY system_id, scan_id DESC),\nmap(item, rule) AS (VALUES\n    ('ITEM-01', 'accounts_user_interactive_home_directory_exists'),\n    ('ITEM-02', 'auditd_name_format'),\n    ('ITEM-03', 'auditd_data_retention_space_left_percentage'),\n    ('ITEM-04', 'chronyd_client_only'),\n    ('ITEM-05', 'chronyd_no_chronyc_network'),\n    ('ITEM-06', 'package_sendmail_removed'),\n    ('ITEM-07', 'kernel_module_uvcvideo_disabled'),\n    ('ITEM-08', 'kernel_module_firewire-core_disabled'),\n    ('ITEM-09', 'kernel_module_bluetooth_disabled'),\n    ('ITEM-10', 'disable_ctrlaltdel_reboot'),\n    ('ITEM-11', 'disable_ctrlaltdel_burstaction'),\n    ('ITEM-12', 'sudoers_validate_passwd'),\n    ('ITEM-13', 'no_empty_passwords'),\n    ('ITEM-14', 'chronyd_run_as_chrony_user'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_system_auth'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_password_auth'),\n    ('ITEM-16', 'accounts_maximum_age_login_defs')),\nr AS (\n  SELECT l.hostname, l.end_time, l.scan_id, m.item, m.rule, COALESCE(rr.result, '(no result)') AS result\n  FROM latest l CROSS JOIN map m\n  LEFT JOIN scapscanresultreport rr ON rr.scan_id = l.scan_id\n       AND replace(rr.idref, 'xccdf_org.ssgproject.content_rule_', '') = m.rule),\nf AS (\n  SELECT hostname, end_time, scan_id, item,\n    CASE WHEN bool_or(result IN ('fail','error','unknown')) THEN 'fail'\n         WHEN bool_or(result IN ('(no result)','notselected')) THEN 'unchecked'\n         WHEN bool_and(result = 'notapplicable') THEN 'na'\n         ELSE 'pass' END AS verdict\n  FROM r GROUP BY 1,2,3,4)\nSELECT hostname AS \"主機\",\n  round(100.0 * count(*) FILTER (WHERE verdict = 'pass') / NULLIF(count(*) FILTER (WHERE verdict <> 'na'), 0), 1) AS \"合規率(%)\",\n  count(*) FILTER (WHERE verdict = 'pass') AS \"符合\", count(*) FILTER (WHERE verdict IN ('fail','unchecked')) AS \"不符合\",\n  max(end_time) AS \"掃描時間\", max(scan_id) AS \"xid\"\nFROM f GROUP BY hostname ORDER BY hostname",
+     "refId": "A"
+    }
+   ],
+   "title": "各主機合規明細",
+   "type": "table"
+  },
+  {
+   "datasource": {
+    "uid": "${DS_REPORTDB}"
+   },
+   "gridPos": {
+    "h": 9,
+    "w": 24,
+    "x": 0,
+    "y": 7
+   },
+   "id": 2,
+   "targets": [
+    {
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "${DS_REPORTDB}"
+     },
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (system_id) system_id, scan_id, hostname, end_time\n  FROM scapscanreport WHERE profile = 'xccdf_org.ssgproject.content_profile_lab_selected'\n  ORDER BY system_id, scan_id DESC),\nmap(item, rule) AS (VALUES\n    ('ITEM-01', 'accounts_user_interactive_home_directory_exists'),\n    ('ITEM-02', 'auditd_name_format'),\n    ('ITEM-03', 'auditd_data_retention_space_left_percentage'),\n    ('ITEM-04', 'chronyd_client_only'),\n    ('ITEM-05', 'chronyd_no_chronyc_network'),\n    ('ITEM-06', 'package_sendmail_removed'),\n    ('ITEM-07', 'kernel_module_uvcvideo_disabled'),\n    ('ITEM-08', 'kernel_module_firewire-core_disabled'),\n    ('ITEM-09', 'kernel_module_bluetooth_disabled'),\n    ('ITEM-10', 'disable_ctrlaltdel_reboot'),\n    ('ITEM-11', 'disable_ctrlaltdel_burstaction'),\n    ('ITEM-12', 'sudoers_validate_passwd'),\n    ('ITEM-13', 'no_empty_passwords'),\n    ('ITEM-14', 'chronyd_run_as_chrony_user'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_system_auth'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_password_auth'),\n    ('ITEM-16', 'accounts_maximum_age_login_defs')),\nr AS (\n  SELECT l.hostname, l.end_time, l.scan_id, m.item, m.rule, COALESCE(rr.result, '(no result)') AS result\n  FROM latest l CROSS JOIN map m\n  LEFT JOIN scapscanresultreport rr ON rr.scan_id = l.scan_id\n       AND replace(rr.idref, 'xccdf_org.ssgproject.content_rule_', '') = m.rule),\nf AS (\n  SELECT hostname, end_time, scan_id, item,\n    CASE WHEN bool_or(result IN ('fail','error','unknown')) THEN 'fail'\n         WHEN bool_or(result IN ('(no result)','notselected')) THEN 'unchecked'\n         WHEN bool_and(result = 'notapplicable') THEN 'na'\n         ELSE 'pass' END AS verdict\n  FROM r GROUP BY 1,2,3,4)\nSELECT r.hostname AS \"主機\", r.item AS \"項目 ID\", r.rule AS \"規則\", r.result AS \"規則結果\", r.end_time AS \"掃描時間\", r.scan_id AS \"xid\"\nFROM r JOIN f USING (hostname, item) WHERE f.verdict IN ('fail','unchecked') AND r.result <> 'pass' ORDER BY 1, 2, 3",
+     "refId": "A"
+    }
+   ],
+   "title": "不合規主機清單（主機 × 項目 × 規則）",
+   "type": "table"
+  },
+  {
+   "datasource": {
+    "uid": "${DS_REPORTDB}"
+   },
+   "fieldConfig": {
+    "defaults": {
+     "min": 0
+    },
+    "overrides": []
+   },
+   "gridPos": {
+    "h": 9,
+    "w": 14,
+    "x": 0,
+    "y": 16
+   },
+   "id": 3,
+   "options": {
+    "orientation": "horizontal",
+    "showValue": "always",
+    "xField": "項目 ID"
+   },
+   "targets": [
+    {
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "${DS_REPORTDB}"
+     },
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "WITH latest AS (\n  SELECT DISTINCT ON (system_id) system_id, scan_id, hostname, end_time\n  FROM scapscanreport WHERE profile = 'xccdf_org.ssgproject.content_profile_lab_selected'\n  ORDER BY system_id, scan_id DESC),\nmap(item, rule) AS (VALUES\n    ('ITEM-01', 'accounts_user_interactive_home_directory_exists'),\n    ('ITEM-02', 'auditd_name_format'),\n    ('ITEM-03', 'auditd_data_retention_space_left_percentage'),\n    ('ITEM-04', 'chronyd_client_only'),\n    ('ITEM-05', 'chronyd_no_chronyc_network'),\n    ('ITEM-06', 'package_sendmail_removed'),\n    ('ITEM-07', 'kernel_module_uvcvideo_disabled'),\n    ('ITEM-08', 'kernel_module_firewire-core_disabled'),\n    ('ITEM-09', 'kernel_module_bluetooth_disabled'),\n    ('ITEM-10', 'disable_ctrlaltdel_reboot'),\n    ('ITEM-11', 'disable_ctrlaltdel_burstaction'),\n    ('ITEM-12', 'sudoers_validate_passwd'),\n    ('ITEM-13', 'no_empty_passwords'),\n    ('ITEM-14', 'chronyd_run_as_chrony_user'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_system_auth'),\n    ('ITEM-15', 'accounts_password_pam_pwhistory_remember_password_auth'),\n    ('ITEM-16', 'accounts_maximum_age_login_defs')),\nr AS (\n  SELECT l.hostname, l.end_time, l.scan_id, m.item, m.rule, COALESCE(rr.result, '(no result)') AS result\n  FROM latest l CROSS JOIN map m\n  LEFT JOIN scapscanresultreport rr ON rr.scan_id = l.scan_id\n       AND replace(rr.idref, 'xccdf_org.ssgproject.content_rule_', '') = m.rule),\nf AS (\n  SELECT hostname, end_time, scan_id, item,\n    CASE WHEN bool_or(result IN ('fail','error','unknown')) THEN 'fail'\n         WHEN bool_or(result IN ('(no result)','notselected')) THEN 'unchecked'\n         WHEN bool_and(result = 'notapplicable') THEN 'na'\n         ELSE 'pass' END AS verdict\n  FROM r GROUP BY 1,2,3,4)\nSELECT item AS \"項目 ID\", count(*) FILTER (WHERE verdict IN ('fail','unchecked')) AS \"不符合主機數\"\nFROM f GROUP BY item ORDER BY item",
+     "refId": "A"
+    }
+   ],
+   "title": "每個項目不符合的主機數",
+   "type": "barchart"
+  },
+  {
+   "datasource": {
+    "uid": "${DS_REPORTDB}"
+   },
+   "description": "systemerrata 只含 MLM 有同步內容的通道的修補；本環境 RHEL 主機只有 Client Tools 通道，結果不代表作業系統本身的漏洞",
+   "gridPos": {
+    "h": 9,
+    "w": 10,
+    "x": 14,
+    "y": 16
+   },
+   "id": 4,
+   "targets": [
+    {
+     "datasource": {
+      "type": "grafana-postgresql-datasource",
+      "uid": "${DS_REPORTDB}"
+     },
+     "editorMode": "code",
+     "format": "table",
+     "rawSql": "-- 沿用 主機 × advisory × 嚴重度 × CVE（systemerrata＝該主機可套用但未套用的修補）\nSELECT coalesce(nullif(e.severity, ''), '(未標)') AS \"嚴重度\", count(DISTINCT se.advisory_name) AS \"advisory 數\",\n  count(DISTINCT c.cve) AS \"CVE 數\", count(DISTINCT se.system_id) AS \"主機數\"\nFROM systemerrata se\nJOIN errata e ON e.errata_id = se.errata_id AND e.mgm_id = se.mgm_id\nLEFT JOIN LATERAL regexp_split_to_table(nullif(e.cve, ''), '\\s*[;,]\\s*') AS c(cve) ON true\nGROUP BY 1 ORDER BY 1",
+     "refId": "A"
+    }
+   ],
+   "title": "漏洞統計：嚴重度 × advisory／CVE／主機數",
+   "type": "table"
+  }
+ ],
+ "refresh": "1m",
+ "schemaVersion": 39,
+ "tags": [
+  "lab"
+ ],
+ "time": {
+  "from": "now-30d",
+  "to": "now"
+ },
+ "timezone": "browser",
+ "title": "lab-compliance",
+ "uid": "lab-compliance"
+}

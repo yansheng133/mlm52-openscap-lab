@@ -2,7 +2,9 @@
 
 實測 SUSE Multi-Linux Manager（MLM）5.2 的合規相關功能時用到的腳本與工具：讓雲端 RHEL 用戶端經反向 SSH 通道註冊到一台不對外開放的 MLM、把帶 DISA STIG Vuln ID 的組態基準對到 SSG 規則、產生只含指定規則的 tailoring、經 API 排定（定時）OpenSCAP 掃描並檢查結果。
 
-實測結果與完整說明：https://hackmd.io/@yansheng133/Hk1iJR4ozg
+實測結果與完整說明：
+- 第一輪（OpenSCAP、tailoring、test mode、CVE 嚴重度）：https://hackmd.io/@yansheng133/Hk1iJR4ozg
+- 第二輪（修正閉環、漂移、盤點、token 外洩、Grafana 告警、Content Lifecycle）：https://hackmd.io/@yansheng133/ryy9fctoGg ，工具在 [`round2/`](round2/)
 
 > 驗證環境：MLM 5.2.0（podman，aarch64 主機）、RHEL 8.10 與 RHEL 9.8（AWS 隨用量計費 AMI）、scap-security-guide-redhat 0.1.79、openscap 1.3.14、DISA RHEL 8 STIG V2R8。
 > 文中與範例的位址都是文件用位址（RFC 5737）。

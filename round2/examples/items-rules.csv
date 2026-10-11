@@ -1,0 +1,17 @@
+item_id,title,rules
+ITEM-01,Home directories defined in /etc/passwd must exist,accounts_user_interactive_home_directory_exists
+ITEM-02,auditd name_format must be set,auditd_name_format
+ITEM-03,Act when audit storage reaches 75% usage,auditd_data_retention_space_left_percentage
+ITEM-04,chrony must not act as a server (port 0),chronyd_client_only
+ITEM-05,chrony network management disabled (cmdport 0),chronyd_no_chronyc_network
+ITEM-06,sendmail must not be installed,package_sendmail_removed
+ITEM-07,Camera (uvcvideo) disabled,kernel_module_uvcvideo_disabled
+ITEM-08,IEEE 1394 FireWire disabled,kernel_module_firewire-core_disabled
+ITEM-09,Bluetooth disabled,kernel_module_bluetooth_disabled
+ITEM-10,Ctrl-Alt-Delete disabled,disable_ctrlaltdel_reboot
+ITEM-11,systemd Ctrl-Alt-Delete burst action disabled,disable_ctrlaltdel_burstaction
+ITEM-12,sudo requires the user's password,sudoers_validate_passwd
+ITEM-13,No blank passwords (no nullok),no_empty_passwords
+ITEM-14,chronyd runs without extra privileges,chronyd_run_as_chrony_user
+ITEM-15,Password history is enforced,accounts_password_pam_pwhistory_remember_system_auth;accounts_password_pam_pwhistory_remember_password_auth
+ITEM-16,Maximum password age,accounts_maximum_age_login_defs
